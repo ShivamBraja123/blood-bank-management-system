@@ -16,6 +16,7 @@ import {
   Clock,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { API_URL } from "../../config/api.js";
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
@@ -34,7 +35,7 @@ const AdminDashboard = () => {
 
       console.log("🔄 Fetching admin dashboard stats...");
       
-      const res = await fetch("/api/admin/dashboard", {
+      const res = await fetch(`${API_URL}/admin/dashboard`, {
         headers: { 
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",

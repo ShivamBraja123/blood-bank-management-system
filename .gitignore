@@ -26,3 +26,6 @@ dist-ssr
 # Environment Variables
 .env
 .env.*
+!.env.example
+!backend/.env.example
+!frontend/.env.example

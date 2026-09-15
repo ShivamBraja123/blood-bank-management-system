@@ -1,4 +1,5 @@
 import { toast } from "react-hot-toast";
+import { API_BASE_URL } from "../config/api.js";
 
 export const handleAuthError = (navigate) => {
   localStorage.removeItem("token");
@@ -32,8 +33,10 @@ export const makeAuthenticatedRequest = async (url, options = {}, navigate) => {
     },
   };
 
+  const requestUrl = url.startsWith("/api/") ? `${API_BASE_URL}${url}` : url;
+
   try {
-    const response = await fetch(url, requestOptions);
+    const response = await fetch(requestUrl, requestOptions);
     
     if (!response.ok) {
       if (response.status === 401 || response.status === 403) {
