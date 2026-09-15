@@ -1,144 +1,237 @@
-# Blood Bank Management System (BBMS)
+# Blood Bank Management System
 
-## Overview
+A full-stack blood bank management application for coordinating donors, hospitals, blood laboratories, inventory, blood requests, and administrative approvals through a role-based web interface.
 
-The **Blood Bank Management System (BBMS)** is a web-based platform designed to streamline the management of blood donations, hospital requests, and inventory tracking. By replacing manual processes with a structured digital workflow, BBMS enables hospitals and blood banks to access real-time inventory, maintain donor records, and process blood requests efficiently.
+## Key Features
 
+- Donor registration, profile management, eligibility information, camps, and donation history
+- Hospital registration, approval workflow, inventory, donor directory, and blood requests
+- Blood-lab registration, approval workflow, blood stock, donation camps, donor search, and request management
+- Admin dashboard with facility approval, facility management, donor management, and system statistics
+- Blood stock transfer from an approved blood lab to an approved hospital
+- JWT-based authentication with protected API routes and role-based authorization
+- MongoDB persistence through Mongoose
+- Swagger/OpenAPI documentation endpoint
 
-## The Problem
+## User Roles
 
-Many blood banks still rely on manual documentation, scattered information, and slow communication methods. This leads to:
+### Donor
 
-* No real-time visibility of blood availability
-* Delays during emergency blood requirements
-* Frequent data entry errors
-* Difficulty managing donors, patients, and hospital requests
-* Lack of a centralized system connecting all operations
+Donors can register, sign in, manage their profile, review eligibility and donation history, and view blood donation camps.
 
-These limitations reduce the efficiency and reliability of blood bank operations.
+### Hospital
 
+Hospitals register for approval, then manage their profile and inventory, browse donors, view approved blood labs, and submit blood requests.
 
-## Our Solution
+### Blood Lab
 
-BBMS provides an **all-in-one, centralized, and secure system** that handles all operations digitally. Key features include:
+Blood labs register for approval, then manage blood stock and camps, search donors, record donations, and accept or reject hospital blood requests.
 
-* Donor registration and management
-* Hospital request creation and status tracking
-* Real-time inventory monitoring
-* Secure authentication using JWT
-* Fully structured backend APIs
-* Organized frontend interface for hospitals and staff
+### Admin
 
-The goal is to ensure quick response times, reduce manual errors, and improve operational workflow.
+Admins authenticate through the same login flow and can view system statistics, inspect facilities and donors, and approve or reject hospital and blood-lab registrations.
 
-## Tech Stack
+## Main Workflow
+
+1. A donor registers directly.
+2. A hospital or blood lab registers with a pending status.
+3. An admin reviews and approves or rejects the facility.
+4. Approved blood labs add and manage blood inventory.
+5. Approved hospitals select an approved blood lab and submit a blood request.
+6. The blood lab reviews the request and accepts or rejects it.
+7. When accepted, available blood stock is transferred from the lab to the hospital.
+8. Authorized users can view blood availability and use role-specific donor and inventory features.
+
+## Authentication and Authorization
+
+- JWTs are issued by the backend after successful login.
+- The frontend stores the token locally for authenticated sessions.
+- Protected requests send the token in the `Authorization: Bearer <token>` header.
+- Backend middleware validates JWTs and loads the authenticated user or facility.
+- Admin, hospital, blood-lab, and donor routes enforce the appropriate role or facility type.
+- Facility accounts remain unavailable for login until an admin approves them.
+
+## Technology Stack
 
 ### Frontend
 
-* React.js
-* React Router
-* Axios
-* Tailwind CSS
+- React
+- Vite
+- React Router
+- Axios and Fetch API
+- Tailwind CSS
+- Framer Motion
+- Lucide React
+- React Hot Toast and React Toastify
 
 ### Backend
 
-* Node.js
-* Express.js
-* MongoDB
-* Mongoose
-* JWT Authentication
-* bcrypt for password hashing
+- Node.js
+- Express
+- MongoDB and Mongoose
+- JSON Web Tokens (`jsonwebtoken`)
+- `bcryptjs` password hashing
+- CORS
+- Swagger UI and `swagger-jsdoc`
 
-## Environment Setup
+## Project Structure
+
+```text
+.
+├── backend/
+│   ├── controllers/       # Request and business logic
+│   ├── middleware/        # Shared authentication middleware
+│   ├── middlewares/       # Role and resource-specific middleware
+│   ├── models/            # Mongoose models
+│   ├── routes/            # Express API routes
+│   ├── openapi/           # Swagger/OpenAPI configuration
+│   ├── scripts/           # Development setup scripts
+│   └── server.js          # Express server entry point
+├── frontend/
+│   ├── public/             # Public frontend assets
+│   └── src/
+│       ├── components/     # Shared UI and layout components
+│       ├── pages/          # Role-specific and public pages
+│       └── utils/          # Frontend authentication helpers
+├── docs/
+│   └── images/             # Repository-local project screenshots
+├── docker-compose.yml
+└── README.md
+```
+
+## Screenshots
+
+The following screenshots are from this project:
+
+### Admin Dashboard
+
+![Admin dashboard](docs/images/admin-dashboard.png)
+
+### Admin Donor Management
+
+![Admin donor management](docs/images/admin-donors.png)
+
+## Local Setup
+
+### Prerequisites
+
+- Node.js and npm
+- MongoDB or a MongoDB Atlas cluster
 
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/suraj-savle/blood-bank-management-system.git
+git clone https://github.com/ShivamBraja123/blood-bank-management-system.git
+cd blood-bank-management-system
 ```
 
-### Backend Setup
+### Backend Environment
+
+Create `backend/.env` using the existing `backend/.env.example` as a reference:
+
+```env
+MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_long_random_jwt_secret
+PORT=5000
+```
+
+Do not commit `.env` files or real credentials.
+
+### Install Dependencies
 
 ```bash
 cd backend
 npm install
+
+cd ../frontend
+npm install
 ```
 
-Create a `.env` file:
+The frontend reads the backend base URL from `frontend/.env`:
 
-```bash
-MONGO_URI=your_mongo_uri
-JWT_SECRET=your_jwt_secret
-PORT=5000
+```env
+VITE_API_URL=http://localhost:5000
 ```
 
-### Important: Seed Admin Account (First Time Setup)
+## Development Admin Setup
 
-Before starting the backend server for the first time, you must create an admin user.
-
-### Open the file: backend/seedAdmin.js
-Update the admin credentials inside the file:
-
-### Run the seed script from the backend folder:
+The backend includes a development-only admin seed command:
 
 ```bash
-node seedAdmin.js
+cd backend
+$env:DEV_ADMIN_EMAIL="admin@example.local"
+$env:DEV_ADMIN_PASSWORD="use-a-local-development-password"
+npm run seed:admin
 ```
 
-This will create the admin account in the database.
-
-### Start the backend server:
+On macOS/Linux, set the variables with:
 
 ```bash
+DEV_ADMIN_EMAIL=admin@example.local \
+DEV_ADMIN_PASSWORD=use-a-local-development-password \
+npm run seed:admin
+```
+
+The seed command requires `MONGO_URI`, creates the admin only if the configured email does not already exist, and refuses to run when `NODE_ENV=production`.
+
+## Run the Application
+
+Start the backend:
+
+```bash
+cd backend
 npm start
 ```
 
-### Frontend Setup
+The backend runs on `http://localhost:5000` by default.
+
+In a second terminal, start the frontend:
 
 ```bash
-cd ../frontend
-npm install
+cd frontend
 npm run dev
 ```
 
-### 🐳 Another Option: Run with Docker (Recommended)
+The Vite development server runs on `http://localhost:5173` by default.
 
-Make sure Docker Desktop is installed and running.
+## API and Backend Overview
 
-```bash
-docker compose up --build
-```
+The Express server mounts the following route groups:
 
-Access the app:
+| Route group | Purpose |
+| --- | --- |
+| `/api/auth` | Registration, login, and authenticated profile |
+| `/api/donor` | Donor profile, statistics, camps, and history |
+| `/api/facility` | Facility profile, dashboard, and approved-lab lookup |
+| `/api/hospital` | Hospital inventory, donor access, and blood requests |
+| `/api/blood-lab` | Lab dashboard, camps, blood stock, donor search, and request processing |
+| `/api/admin` | Admin dashboard, facility approval, facility listing, and donor management |
+| `/api/doc` | Swagger UI and generated API documentation |
 
-Frontend → http://localhost
+Protected endpoints require a valid bearer token. Hospital and blood-lab operations additionally require an approved facility with the matching facility type.
 
-Backend → http://localhost:3000
+## Database
 
-Seed Admin User (if needed)
+The application uses MongoDB through Mongoose. It supports a local MongoDB instance or MongoDB Atlas by setting `MONGO_URI` in `backend/.env`. Database credentials and connection strings must remain local and must never be committed.
 
-```bash
-docker exec -it backend node seedAdmin.js
-```
+## Security Notes
 
-**Login Page**
+- Keep `backend/.env` and all environment-specific files out of version control.
+- Use a strong, unique `JWT_SECRET` outside local development.
+- Use a strong local-only password when running the development admin seed.
+- Do not expose MongoDB credentials, JWT secrets, or API keys in source code.
+- Keep facility approval and role-based authorization enabled.
+- Use HTTPS and secure deployment secrets in production.
+- Review and rotate development credentials before sharing a deployed environment.
 
-<img width="1920" height="970" alt="image" src="https://github.com/user-attachments/assets/b7796043-c68d-4dda-8203-0be6b79ee5c0" />
+## Future Improvements
 
+- Add automated backend and frontend test coverage.
+- Add pagination and filtering improvements for larger datasets.
+- Add audit logging and more detailed admin reporting.
+- Add production deployment documentation and managed secret configuration.
+- Improve transactional handling for stock transfers and concurrent requests.
 
-**Admin Dashboard**
+## License
 
-<img width="1920" height="1257" alt="image" src="https://github.com/user-attachments/assets/08f36872-ee09-4716-a66a-316aa1c763d5" />
-
-**Donor ashboard**
-
-<img width="1732" height="1536" alt="image" src="https://github.com/user-attachments/assets/9d715e70-c930-4f00-b8f4-0e28d43ee07e" />
-
-**Manage Requests**
-
-<img width="1920" height="1518" alt="image" src="https://github.com/user-attachments/assets/7aafa2aa-d2d4-4f20-982b-136de08df71a" />
-
-
-**Inventory Overview**
-
-<img width="1920" height="1121" alt="image" src="https://github.com/user-attachments/assets/65110412-2e41-4c0f-824d-7ee9ebed91bb" />
+This project is distributed under the MIT License. See [LICENSE](LICENSE) for details.
