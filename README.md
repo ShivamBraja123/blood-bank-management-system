@@ -1,131 +1,186 @@
 # Blood Bank Management System
 
-A full-stack blood bank management application for coordinating donors, hospitals, blood laboratories, inventory, blood requests, and administrative approvals through a role-based web interface.
+A full-stack Blood Bank Management System for managing donors, hospitals, blood laboratories, blood inventory, blood requests, approvals, and blood transfers through a role-based web application.
 
-## Key Features
+## Features
 
-- Donor registration, profile management, eligibility information, camps, and donation history
-- Hospital registration, approval workflow, inventory, donor directory, and blood requests
-- Blood-lab registration, approval workflow, blood stock, donation camps, donor search, and request management
-- Admin dashboard with facility approval, facility management, donor management, and system statistics
-- Blood stock transfer from an approved blood lab to an approved hospital
-- JWT-based authentication with protected API routes and role-based authorization
-- MongoDB persistence through Mongoose
-- Swagger/OpenAPI documentation endpoint
+* Donor registration and authentication
+* Donor profile and donation history
+* Hospital registration and admin approval
+* Blood-lab registration and admin approval
+* Role-based authentication and authorization
+* Admin dashboard and facility management
+* Blood-lab blood inventory management
+* Hospital blood requests
+* Blood request approval and processing
+* Blood stock transfer from blood lab to hospital
+* Blood availability and blood search
+* Donor search
+* Donation camp management
+* Protected API routes using JWT authentication
+* MongoDB database with Mongoose
+* Swagger/OpenAPI API documentation
 
 ## User Roles
 
 ### Donor
 
-Donors can register, sign in, manage their profile, review eligibility and donation history, and view blood donation camps.
+Donors can:
+
+* Register and log in
+* Manage their profile
+* View eligibility information
+* View donation history
+* View available donation camps
 
 ### Hospital
 
-Hospitals register for approval, then manage their profile and inventory, browse donors, view approved blood labs, and submit blood requests.
+Approved hospitals can:
+
+* Manage their profile
+* View blood availability
+* Search donors
+* View approved blood laboratories
+* Submit blood requests
+* Manage hospital blood inventory
 
 ### Blood Lab
 
-Blood labs register for approval, then manage blood stock and camps, search donors, record donations, and accept or reject hospital blood requests.
+Approved blood laboratories can:
+
+* Manage blood stock
+* Search donors
+* Manage donation camps
+* View hospital blood requests
+* Accept or reject blood requests
+* Transfer available blood stock to approved hospitals
 
 ### Admin
 
-Admins authenticate through the same login flow and can view system statistics, inspect facilities and donors, and approve or reject hospital and blood-lab registrations.
+Administrators can:
+
+* Access the admin dashboard
+* View system statistics
+* Manage hospitals and blood laboratories
+* Approve or reject facility registrations
+* Manage donor information
+* Monitor system activity
 
 ## Main Workflow
 
-1. A donor registers directly.
-2. A hospital or blood lab registers with a pending status.
-3. An admin reviews and approves or rejects the facility.
-4. Approved blood labs add and manage blood inventory.
-5. Approved hospitals select an approved blood lab and submit a blood request.
-6. The blood lab reviews the request and accepts or rejects it.
-7. When accepted, available blood stock is transferred from the lab to the hospital.
-8. Authorized users can view blood availability and use role-specific donor and inventory features.
+1. A donor registers directly in the system.
+2. A hospital or blood laboratory registers with a pending status.
+3. An administrator reviews the facility registration.
+4. The administrator approves or rejects the facility.
+5. Approved blood laboratories add and manage blood inventory.
+6. Approved hospitals search for available blood.
+7. A hospital submits a blood request to an approved blood laboratory.
+8. The blood laboratory reviews and accepts or rejects the request.
+9. When accepted, available blood stock is transferred from the laboratory to the hospital.
+10. Authorized users can access role-specific dashboards and functionality.
 
-## Authentication and Authorization
+## Authentication & Authorization
 
-- JWTs are issued by the backend after successful login.
-- The frontend stores the token locally for authenticated sessions.
-- Protected requests send the token in the `Authorization: Bearer <token>` header.
-- Backend middleware validates JWTs and loads the authenticated user or facility.
-- Admin, hospital, blood-lab, and donor routes enforce the appropriate role or facility type.
-- Facility accounts remain unavailable for login until an admin approves them.
+The application uses JWT-based authentication and role-based authorization.
+
+* JWT tokens are generated after successful authentication.
+* Authenticated requests use the `Authorization: Bearer <token>` header.
+* Protected backend routes validate the JWT.
+* Role-based middleware restricts access to appropriate resources.
+* Admin routes require administrator authorization.
+* Hospital routes require an approved hospital account.
+* Blood-lab routes require an approved blood-lab account.
+* Facility accounts cannot access the system until approved by an administrator.
+* Unauthorized users receive appropriate authentication or authorization responses.
 
 ## Technology Stack
 
 ### Frontend
 
-- React
-- Vite
-- React Router
-- Axios and Fetch API
-- Tailwind CSS
-- Framer Motion
-- Lucide React
-- React Hot Toast and React Toastify
+* React
+* Vite
+* React Router
+* Axios
+* Fetch API
+* Tailwind CSS
+* Framer Motion
+* Lucide React
+* React Hot Toast
+* React Toastify
 
 ### Backend
 
-- Node.js
-- Express
-- MongoDB and Mongoose
-- JSON Web Tokens (`jsonwebtoken`)
-- `bcryptjs` password hashing
-- CORS
-- Swagger UI and `swagger-jsdoc`
+* Node.js
+* Express.js
+* MongoDB
+* Mongoose
+* JSON Web Token (`jsonwebtoken`)
+* bcryptjs
+* CORS
+* Swagger UI
+* swagger-jsdoc
 
 ## Project Structure
 
 ```text
-.
+blood-bank-management-system/
+│
 ├── backend/
-│   ├── controllers/       # Request and business logic
-│   ├── middleware/        # Shared authentication middleware
-│   ├── middlewares/       # Role and resource-specific middleware
-│   ├── models/            # Mongoose models
-│   ├── routes/            # Express API routes
-│   ├── openapi/           # Swagger/OpenAPI configuration
-│   ├── scripts/           # Development setup scripts
-│   └── server.js          # Express server entry point
+│   ├── controllers/
+│   ├── middleware/
+│   ├── middlewares/
+│   ├── models/
+│   ├── routes/
+│   ├── openapi/
+│   ├── scripts/
+│   └── server.js
+│
 ├── frontend/
-│   ├── public/             # Public frontend assets
+│   ├── public/
 │   └── src/
-│       ├── components/     # Shared UI and layout components
-│       ├── pages/          # Role-specific and public pages
-│       └── utils/          # Frontend authentication helpers
+│       ├── components/
+│       ├── pages/
+│       └── utils/
+│
 ├── docker-compose.yml
+├── LICENSE
+├── CONTRIBUTING.md
+├── .gitignore
 └── README.md
 ```
 
 ## Screenshots
 
-Screenshots of the completed application will be added here after deployment.
+Screenshots of the deployed application will be added after deployment.
 
 ## Local Setup
 
 ### Prerequisites
 
-- Node.js and npm
-- MongoDB or MongoDB Atlas
-- Git
+Make sure you have the following installed:
 
-### Installation
+* Node.js
+* npm
+* Git
+* MongoDB or MongoDB Atlas
 
-Clone the repository:
+### Clone the Repository
 
-```
+```bash
 git clone https://github.com/ShivamBraja123/blood-bank-management-system.git
 cd blood-bank-management-system
 ```
 
-Install backend dependencies:
+### Backend Setup
 
 ```bash
 cd backend
 npm install
 ```
 
-Create the backend `.env` file using the required environment variables.
+Create a `.env` file inside the `backend` directory.
+
+Configure the required environment variables, including your MongoDB connection string and JWT secret.
 
 Start the backend:
 
@@ -139,11 +194,25 @@ The backend runs on:
 http://localhost:5000
 ```
 
-Open another terminal and install frontend dependencies:
+### Frontend Setup
+
+Open a new terminal:
 
 ```bash
 cd frontend
 npm install
+```
+
+If an explicit API URL is required, create:
+
+```text
+frontend/.env
+```
+
+and configure:
+
+```text
+VITE_API_URL=http://localhost:5000
 ```
 
 Start the frontend:
@@ -158,83 +227,140 @@ The frontend runs on:
 http://localhost:5173
 ```
 
-### Environment Variables
+## Environment Variables
 
-Do not commit `.env` files or database credentials to GitHub.
+Never commit environment variables or credentials to GitHub.
 
-Configure the required environment variables locally for the backend, including the MongoDB connection string and JWT secret. The frontend can use `VITE_API_URL=http://localhost:5000` in `frontend/.env` when an explicit API base URL is needed.
+Typical backend configuration includes:
 
-### Development Admin
-
-For local development, the project includes a development-only admin seed setup. Set `DEV_ADMIN_EMAIL` and `DEV_ADMIN_PASSWORD` locally before running `npm run seed:admin` from the `backend` directory.
-
-The development admin credentials should be kept private and must not be published in this README or repository.
-
-### Main User Roles
-
-- **Donor** — Register, log in, and access donor functionality.
-- **Hospital** — Register, receive admin approval, search/request blood, and manage hospital-side functionality.
-- **Blood Lab** — Register, receive admin approval, manage blood inventory, and process blood requests.
-- **Admin** — Manage facilities, approve accounts, and manage administrative functionality.
-
-## Run the Application
-
-Start the backend:
-
-```bash
-cd backend
-npm start
+```text
+MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_secure_jwt_secret
 ```
 
-The backend runs on `http://localhost:5000` by default.
+Use the environment variables required by the actual backend configuration.
 
-In a second terminal, start the frontend:
+For production deployment, configure secrets through the hosting platform rather than committing them to the repository.
+
+## Development Admin
+
+The project includes a development-only admin seed setup for local testing.
+
+Configure the development admin credentials locally and run the available admin seed command from the `backend` directory.
+
+Example:
 
 ```bash
-cd frontend
-npm run dev
+npm run seed:admin
 ```
 
-The Vite development server runs on `http://localhost:5173` by default.
+Development administrator credentials must remain private and must never be committed to GitHub or exposed in a public deployment.
 
-## API and Backend Overview
+## API Overview
 
-The Express server mounts the following route groups:
+The backend provides REST API route groups for the main application functionality.
 
-| Route group | Purpose |
-| --- | --- |
-| `/api/auth` | Registration, login, and authenticated profile |
-| `/api/donor` | Donor profile, statistics, camps, and history |
-| `/api/facility` | Facility profile, dashboard, and approved-lab lookup |
-| `/api/hospital` | Hospital inventory, donor access, and blood requests |
-| `/api/blood-lab` | Lab dashboard, camps, blood stock, donor search, and request processing |
-| `/api/admin` | Admin dashboard, facility approval, facility listing, and donor management |
-| `/api/doc` | Swagger UI and generated API documentation |
+| Route            | Purpose                                                                       |
+| ---------------- | ----------------------------------------------------------------------------- |
+| `/api/auth`      | Registration, login, and authenticated profile                                |
+| `/api/donor`     | Donor profile, statistics, camps, and donation history                        |
+| `/api/facility`  | Facility profile, dashboard, and approved laboratory lookup                   |
+| `/api/hospital`  | Hospital inventory, donor access, and blood requests                          |
+| `/api/blood-lab` | Blood-lab dashboard, camps, inventory, donor search, and request processing   |
+| `/api/admin`     | Admin dashboard, facility approval, facility management, and donor management |
+| `/api/doc`       | Swagger UI and API documentation                                              |
 
-Protected endpoints require a valid bearer token. Hospital and blood-lab operations additionally require an approved facility with the matching facility type.
+Protected endpoints require a valid JWT bearer token.
+
+Hospital and blood-lab endpoints additionally require an approved facility with the correct facility type.
 
 ## Database
 
-The application uses MongoDB through Mongoose. It supports a local MongoDB instance or MongoDB Atlas by setting `MONGO_URI` in `backend/.env`. Database credentials and connection strings must remain local and must never be committed.
+The application uses MongoDB with Mongoose.
 
-## Security Notes
+MongoDB can be hosted locally or through MongoDB Atlas.
 
-- Keep `backend/.env` and all environment-specific files out of version control.
-- Use a strong, unique `JWT_SECRET` outside local development.
-- Use a strong local-only password when running the development admin seed.
-- Do not expose MongoDB credentials, JWT secrets, or API keys in source code.
-- Keep facility approval and role-based authorization enabled.
-- Use HTTPS and secure deployment secrets in production.
-- Review and rotate development credentials before sharing a deployed environment.
+Configure the database connection using the backend environment variables.
+
+Example:
+
+```text
+MONGO_URI=your_mongodb_connection_string
+```
+
+Database credentials and connection strings must never be committed to the repository.
+
+## Security
+
+The application includes:
+
+* JWT authentication
+* Password hashing using bcryptjs
+* Protected API routes
+* Role-based authorization
+* Facility approval workflow
+* Admin-only routes
+* Hospital-specific authorization
+* Blood-lab-specific authorization
+* Environment-based secret management
+
+For production deployment:
+
+* Use HTTPS.
+* Use strong JWT secrets.
+* Store credentials using deployment-platform environment variables.
+* Never expose MongoDB credentials.
+* Never expose development administrator credentials.
+* Keep role-based authorization enabled.
+
+## Testing & Verification
+
+The application has been verified through the following end-to-end flows:
+
+* Donor registration and login
+* Donor dashboard and session persistence
+* Hospital registration and admin approval
+* Hospital login and dashboard
+* Blood-lab registration and admin approval
+* Blood-lab login and dashboard
+* Admin login and dashboard
+* Blood search
+* Blood availability
+* Blood inventory management
+* Hospital blood requests
+* Blood-lab request approval
+* Blood stock transfer
+* JWT authentication
+* Protected routes
+* Role-based authorization
+* Logout and session persistence
+
+A complete hospital-to-blood-lab blood request workflow was also verified, including transfer of blood stock from the laboratory to the hospital.
 
 ## Future Improvements
 
-- Add automated backend and frontend test coverage.
-- Add pagination and filtering improvements for larger datasets.
-- Add audit logging and more detailed admin reporting.
-- Add production deployment documentation and managed secret configuration.
-- Improve transactional handling for stock transfers and concurrent requests.
+Possible future improvements include:
+
+* Automated frontend and backend test suites
+* Advanced search and filtering
+* Pagination for larger datasets
+* Detailed admin reports
+* Audit logs
+* Notifications for blood requests
+* Improved transaction handling for concurrent inventory updates
+* Production monitoring and logging
+* Automated CI/CD deployment
 
 ## License
 
-This project is distributed under the MIT License. See [LICENSE](LICENSE) for details.
+This project is distributed under the MIT License.
+
+See the [LICENSE](LICENSE) file for details.
+
+## Author
+
+**Shivam Bhudhiraja**
+
+GitHub: [ShivamBraja123](https://github.com/ShivamBraja123)
+
+Repository: [Blood Bank Management System](https://github.com/ShivamBraja123/blood-bank-management-system)
