@@ -93,86 +93,89 @@ Admins authenticate through the same login flow and can view system statistics, 
 │       ├── components/     # Shared UI and layout components
 │       ├── pages/          # Role-specific and public pages
 │       └── utils/          # Frontend authentication helpers
-├── docs/
-│   └── images/             # Repository-local project screenshots
 ├── docker-compose.yml
 └── README.md
 ```
 
 ## Screenshots
 
-The following screenshots are from this project:
-
-### Admin Dashboard
-
-![Admin dashboard](docs/images/admin-dashboard.png)
-
-### Admin Donor Management
-
-![Admin donor management](docs/images/admin-donors.png)
+Screenshots of the completed application will be added here after deployment.
 
 ## Local Setup
 
 ### Prerequisites
 
 - Node.js and npm
-- MongoDB or a MongoDB Atlas cluster
+- MongoDB or MongoDB Atlas
+- Git
 
-### Clone the Repository
+### Installation
 
-```bash
+Clone the repository:
+
+```
 git clone https://github.com/ShivamBraja123/blood-bank-management-system.git
 cd blood-bank-management-system
 ```
 
-### Backend Environment
-
-Create `backend/.env` using the existing `backend/.env.example` as a reference:
-
-```env
-MONGO_URI=your_mongodb_connection_string
-JWT_SECRET=your_long_random_jwt_secret
-PORT=5000
-```
-
-Do not commit `.env` files or real credentials.
-
-### Install Dependencies
+Install backend dependencies:
 
 ```bash
 cd backend
 npm install
+```
 
-cd ../frontend
+Create the backend `.env` file using the required environment variables.
+
+Start the backend:
+
+```bash
+npm start
+```
+
+The backend runs on:
+
+```text
+http://localhost:5000
+```
+
+Open another terminal and install frontend dependencies:
+
+```bash
+cd frontend
 npm install
 ```
 
-The frontend reads the backend base URL from `frontend/.env`:
-
-```env
-VITE_API_URL=http://localhost:5000
-```
-
-## Development Admin Setup
-
-The backend includes a development-only admin seed command:
+Start the frontend:
 
 ```bash
-cd backend
-$env:DEV_ADMIN_EMAIL="admin@example.local"
-$env:DEV_ADMIN_PASSWORD="use-a-local-development-password"
-npm run seed:admin
+npm run dev
 ```
 
-On macOS/Linux, set the variables with:
+The frontend runs on:
 
-```bash
-DEV_ADMIN_EMAIL=admin@example.local \
-DEV_ADMIN_PASSWORD=use-a-local-development-password \
-npm run seed:admin
+```text
+http://localhost:5173
 ```
 
-The seed command requires `MONGO_URI`, creates the admin only if the configured email does not already exist, and refuses to run when `NODE_ENV=production`.
+### Environment Variables
+
+Do not commit `.env` files or database credentials to GitHub.
+
+Configure the required environment variables locally for the backend, including the MongoDB connection string and JWT secret. The frontend can use `VITE_API_URL=http://localhost:5000` in `frontend/.env` when an explicit API base URL is needed.
+
+### Development Admin
+
+For local development, the project includes a development-only admin seed setup. Set `DEV_ADMIN_EMAIL` and `DEV_ADMIN_PASSWORD` locally before running `npm run seed:admin` from the `backend` directory.
+
+The development admin credentials should be kept private and must not be published in this README or repository.
+
+### Main User Roles
+
+- **Donor** — Register, log in, and access donor functionality.
+- **Hospital** — Register, receive admin approval, search/request blood, and manage hospital-side functionality.
+- **Blood Lab** — Register, receive admin approval, manage blood inventory, and process blood requests.
+- **Admin** — Manage facilities, approve accounts, and manage administrative functionality.
 
 ## Run the Application
 
