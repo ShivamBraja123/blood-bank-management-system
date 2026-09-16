@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import axios from "axios";
 import { toast, Toaster } from "react-hot-toast";
+import { API_URL } from "../../config/api.js";
 import {
   MapPin,
   Calendar,
@@ -19,8 +20,6 @@ import {
 } from "lucide-react";
 
 // NOTE: Ensure this URL matches your running backend API endpoint
-const API_BASE_URL = "/api";
-
 const STATUS_OPTIONS = [
   { value: "all", label: "All Camps" },
   { value: "Upcoming", label: "Upcoming" },
@@ -29,7 +28,7 @@ const STATUS_OPTIONS = [
   { value: "Cancelled", label: "Cancelled" },
 ];
 
-const CampCard = ({ camp }) => {
+const CampCard = ({ camp, onBook, booking }) => {
   const isCompleted = camp.status === 'Completed';
   const isCancelled = camp.status === 'Cancelled';
   const isUpcoming = camp.status === 'Upcoming';
@@ -52,11 +51,10 @@ const CampCard = ({ camp }) => {
   const timeStr = `${camp.time?.start || 'N/A'} - ${camp.time?.end || 'N/A'}`;
   
   // --- Using schema fields: expectedDonors and actualDonors ---
-  const expectedDonors = camp.expectedDonors || 0;
-  const actualDonors = camp.actualDonors || 0; 
-  
-  const slotsAvailable = expectedDonors > 0 ? expectedDonors - actualDonors : 0;
-  const isFull = slotsAvailable <= 0 && expectedDonors > 0 && !isCompleted && !isCancelled;
+  const capacity = camp.capacity ?? camp.expectedDonors ?? 0;
+  const booked = camp.booked ?? camp.actualDonors ?? 0;
+  const slotsAvailable = camp.available ?? Math.max(0, capacity - booked);
+  const isFull = slotsAvailable === 0;
 
   // 1. Full Address including Pincode
   const { venue, city, state, pincode } = camp.location || {};
@@ -70,7 +68,7 @@ const CampCard = ({ camp }) => {
     if (isUpcoming) {
       return (
         <span className="font-medium text-gray-600">
-          {expectedDonors} Expected Donors (Capacity)
+          {capacity} Expected Donors (Capacity)
         </span>
       );
     } 
@@ -78,7 +76,7 @@ const CampCard = ({ camp }) => {
     // For Ongoing, Completed, or Cancelled (where data might be relevant)
     return (
       <span className="font-medium text-gray-600">
-        {actualDonors} Achieved / {expectedDonors} Expected
+        {booked} Booked / {capacity} Capacity
       </span>
     );
   };
@@ -143,6 +141,29 @@ const CampCard = ({ camp }) => {
                 </span>
             </div>
         )}
+
+        <div className="grid grid-cols-3 gap-2 text-sm w-full">
+          <span>Total Capacity: <strong>{capacity}</strong></span>
+          <span>Booked: <strong>{booked}</strong></span>
+          <span>Available: <strong>{slotsAvailable}</strong></span>
+        </div>
+
+        {!isCompleted && !isCancelled && (
+          <button
+            type="button"
+            onClick={() => onBook(camp)}
+            disabled={booking || camp.isBooked || isFull}
+            className={`w-full rounded-xl px-4 py-2.5 font-semibold transition-colors ${
+              camp.isBooked
+                ? "bg-green-100 text-green-700 cursor-default"
+                : isFull
+                ? "bg-gray-200 text-gray-600 cursor-not-allowed"
+                : "bg-red-600 text-white hover:bg-red-700 disabled:opacity-60"
+            }`}
+          >
+            {booking ? "Booking..." : camp.isBooked ? "Booked" : isFull ? "Full" : "Book Slot"}
+          </button>
+        )}
         
         {/* Description Section (Always visible) */}
         <div className="pt-4 border-t border-gray-100 w-full mt-3">
@@ -163,6 +184,8 @@ export const DonorCampsList = () => {
   const [camps, setCamps] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [bookingCampId, setBookingCampId] = useState(null);
+  const [myBookings, setMyBookings] = useState([]);
   
   const [pagination, setPagination] = useState({
     page: 1,
@@ -197,7 +220,7 @@ export const DonorCampsList = () => {
         ...(searchTerm && { q: searchTerm }),
       }).toString();
       
-      const apiUrl = `${API_BASE_URL}/donor/camps?${params}`;
+      const apiUrl = `${API_URL}/donor/camps?${params}`;
       console.log("Fetching camps from URL:", apiUrl);
 
       const response = await axios.get(apiUrl, {
@@ -244,6 +267,53 @@ export const DonorCampsList = () => {
   useEffect(() => {
     fetchCamps();
   }, [fetchCamps]);
+
+  const fetchBookings = useCallback(async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      const response = await axios.get(`${API_URL}/donor/camp-bookings`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setMyBookings(response.data.bookings || []);
+    } catch (err) {
+      console.error("Fetch Camp Bookings Error:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchBookings();
+  }, [fetchBookings]);
+
+  const handleBook = async (camp) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Please log in as a donor to book a camp.");
+      return;
+    }
+
+    setBookingCampId(camp._id);
+    try {
+      const response = await axios.post(
+        `${API_URL}/donor/camps/${camp._id}/book`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const updatedCamp = response.data.camp;
+      setCamps((currentCamps) =>
+        currentCamps.map((currentCamp) =>
+          currentCamp._id === updatedCamp._id ? updatedCamp : currentCamp
+        )
+      );
+      await fetchBookings();
+      toast.success(response.data.message || "Camp slot booked successfully.");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Unable to book this camp.");
+    } finally {
+      setBookingCampId(null);
+    }
+  };
 
   // Filtering is now handled on the backend via the 'q' parameter in fetchCamps
   // We use the full 'camps' list here which should be the filtered result from the API
@@ -381,7 +451,12 @@ export const DonorCampsList = () => {
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
               {displayedCamps.map((camp) => (
-                <CampCard key={camp._id} camp={camp} />
+                <CampCard
+                  key={camp._id}
+                  camp={camp}
+                  onBook={handleBook}
+                  booking={bookingCampId === camp._id}
+                />
               ))}
             </div>
 
@@ -414,6 +489,23 @@ export const DonorCampsList = () => {
               </span>
             </div>
           </>
+        )}
+
+        {myBookings.length > 0 && (
+          <section className="mt-8 bg-white rounded-2xl shadow-lg border border-red-100 p-6">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">My Bookings</h2>
+            <div className="space-y-3">
+              {myBookings.map((booking) => (
+                <div key={booking._id} className="border border-gray-100 rounded-xl p-4">
+                  <p className="font-semibold text-gray-800">{booking.campId?.title}</p>
+                  <p className="text-sm text-gray-600">
+                    {booking.campId?.location?.city}, {booking.campId?.location?.state}
+                  </p>
+                  <p className="text-sm text-green-700 mt-1">Status: Booked</p>
+                </div>
+              ))}
+            </div>
+          </section>
         )}
 
         {/* No Search/Filter Results State */}

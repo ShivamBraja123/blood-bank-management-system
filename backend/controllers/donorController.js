@@ -3,6 +3,7 @@ import User from "../models/UserModel.js";
 // Assuming you have a Facility model for population, and BloodCamp model for camps
 import Facility from "../models/facilityModel.js"; // Placeholder import
 import BloodCamp from "../models/bloodCampModel.js"; // Placeholder import
+import CampBooking from "../models/campBookingModel.js";
 import mongoose from "mongoose"; // Needed for ObjectId in aggregation
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -140,6 +141,7 @@ export const updateDonorProfile = async (req, res) => {
 export const getDonorCamps = async (req, res) => {
   try {
     const { status, page = 1, limit = 10 } = req.query;
+    const donorId = req.donor?._id;
 
     const filter = {};
     
@@ -154,17 +156,36 @@ export const getDonorCamps = async (req, res) => {
     const [camps, total] = await Promise.all([
       // Sort by date ascending (upcoming first)
       BloodCamp.find(filter)
+        .populate("hospital", "name address phone")
         .sort({ date: 1 }) 
         .skip(skip)
         .limit(parseInt(limit)),
-      
       BloodCamp.countDocuments(filter),
     ]);
+
+    const campIds = camps.map((camp) => camp._id);
+    const bookings = await CampBooking.find({
+      donorId,
+      campId: { $in: campIds },
+      status: "booked",
+    }).select("campId");
+    const bookedCampIds = new Set(bookings.map((booking) => booking.campId.toString()));
+    const campsWithCapacity = camps.map((camp) => {
+      const capacity = Math.max(0, camp.expectedDonors || 0);
+      const booked = Math.max(0, camp.actualDonors || 0);
+      return {
+        ...camp.toObject(),
+        capacity,
+        booked,
+        available: Math.max(0, capacity - booked),
+        isBooked: bookedCampIds.has(camp._id.toString()),
+      };
+    });
 
     res.json({
       success: true,
       data: {
-        camps,
+        camps: campsWithCapacity,
         pagination: {
           total,
           currentPage: parseInt(page),
@@ -179,6 +200,104 @@ export const getDonorCamps = async (req, res) => {
         return res.status(401).json({ success: false, message: "Unauthorized. Please log in." });
     }
     res.status(500).json({ success: false, message: "Failed to fetch blood camps" });
+  }
+};
+
+export const bookDonorCamp = async (req, res) => {
+  const session = await mongoose.startSession();
+
+  try {
+    const donorId = req.donor?._id;
+    const donorModel = req.donor?.fullName ? "Donor" : "User";
+    const { campId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(campId)) {
+      return res.status(400).json({ success: false, message: "Invalid camp ID" });
+    }
+
+    let booking;
+    await session.withTransaction(async () => {
+      const existingBooking = await CampBooking.findOne({
+        campId,
+        donorId,
+        status: "booked",
+      }).session(session);
+
+      if (existingBooking) {
+        const duplicateError = new Error("You have already booked this camp.");
+        duplicateError.statusCode = 409;
+        throw duplicateError;
+      }
+
+      const camp = await BloodCamp.findOneAndUpdate(
+        {
+          _id: campId,
+          status: { $in: ["Upcoming", "Ongoing"] },
+          $expr: { $lt: ["$actualDonors", "$expectedDonors"] },
+        },
+        { $inc: { actualDonors: 1 } },
+        { new: true, session }
+      );
+
+      if (!camp) {
+        const fullError = new Error("This camp is full or no longer accepting bookings.");
+        fullError.statusCode = 409;
+        throw fullError;
+      }
+
+      [booking] = await CampBooking.create(
+        [{ campId: camp._id, donorId, donorModel, status: "booked" }],
+        { session }
+      );
+    });
+
+    const camp = await BloodCamp.findById(campId).populate("hospital", "name address phone");
+    const capacity = Math.max(0, camp.expectedDonors || 0);
+    const booked = Math.max(0, camp.actualDonors || 0);
+
+    res.status(201).json({
+      success: true,
+      message: "Camp slot booked successfully.",
+      booking,
+      camp: {
+        ...camp.toObject(),
+        capacity,
+        booked,
+        available: Math.max(0, capacity - booked),
+        isBooked: true,
+      },
+    });
+  } catch (error) {
+    if (error.code === 11000 || error.statusCode === 409) {
+      return res.status(409).json({
+        success: false,
+        message: error.code === 11000 ? "You have already booked this camp." : error.message,
+      });
+    }
+
+    console.error("Book Donor Camp Error:", error);
+    res.status(500).json({ success: false, message: "Failed to book camp slot" });
+  } finally {
+    await session.endSession();
+  }
+};
+
+export const getDonorCampBookings = async (req, res) => {
+  try {
+    const bookings = await CampBooking.find({
+      donorId: req.donor?._id,
+      status: "booked",
+    })
+      .populate({
+        path: "campId",
+        populate: { path: "hospital", select: "name address phone" },
+      })
+      .sort({ bookedAt: -1 });
+
+    res.json({ success: true, bookings });
+  } catch (error) {
+    console.error("Get Donor Camp Bookings Error:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch camp bookings" });
   }
 };
 
