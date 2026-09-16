@@ -27,6 +27,8 @@ import DonorDirectory from "./pages/hospital/DonorDirectory";
 import About from "./components/about/About";
 import Contact from "./components/contact/Contact";
 import DonorDonationHistory from "./pages/donor/DonorDonationHistory";
+import AdminCamps from "./pages/admin/AdminCamps";
+import AdminBookings from "./pages/admin/AdminBookings";
 
 function App() {
   return (
@@ -68,6 +70,8 @@ function App() {
           <Route path="verification" element={<AdminFacilities />} />
           <Route path="donors" element={<GetAllDonors />} />
           <Route path="facilities" element={<GetAllFacilities />} />
+          <Route path="camps" element={<AdminCamps />} />
+          <Route path="bookings" element={<AdminBookings />} />
         </Route>
       </Routes>
   );

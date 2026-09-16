@@ -1,5 +1,7 @@
 import Donor from "../models/donorModel.js";
 import Facility from "../models/facilityModel.js";
+import BloodCamp from "../models/bloodCampModel.js";
+import CampBooking from "../models/campBookingModel.js";
 
 // 🧩 Get Dashboard Overview Stats
 export const getDashboardStats = async (req, res) => {
@@ -93,5 +95,53 @@ export const rejectFacility = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Error rejecting facility" });
+  }
+};
+
+export const getAllCamps = async (req, res) => {
+  try {
+    const camps = await BloodCamp.find()
+      .populate("hospital", "name email")
+      .sort({ date: 1 });
+    res.status(200).json({ camps });
+  } catch (err) {
+    console.error("Admin Camps Error:", err);
+    res.status(500).json({ message: "Error fetching camps" });
+  }
+};
+
+export const updateCampStatus = async (req, res) => {
+  try {
+    const allowedStatuses = ["Upcoming", "Ongoing", "Completed", "Cancelled"];
+    const { status } = req.body;
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({ message: "Invalid camp status" });
+    }
+
+    const camp = await BloodCamp.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true, runValidators: true }
+    );
+    if (!camp) return res.status(404).json({ message: "Camp not found" });
+    res.status(200).json({ message: "Camp status updated", camp });
+  } catch (err) {
+    console.error("Admin Camp Status Error:", err);
+    res.status(500).json({ message: "Error updating camp status" });
+  }
+};
+
+export const getAllCampBookings = async (req, res) => {
+  try {
+    const bookings = await CampBooking.find()
+      .populate({
+        path: "campId",
+        populate: { path: "hospital", select: "name email" },
+      })
+      .sort({ bookedAt: -1 });
+    res.status(200).json({ bookings });
+  } catch (err) {
+    console.error("Admin Bookings Error:", err);
+    res.status(500).json({ message: "Error fetching camp bookings" });
   }
 };
